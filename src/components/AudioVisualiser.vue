@@ -30,6 +30,7 @@
 
 <script>
 import ThreeVisualiser from "./ThreeVisualiser.vue";
+
 export default {
   name: "AudioVisualiser",
   components: {

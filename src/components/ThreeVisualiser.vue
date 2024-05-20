@@ -26,17 +26,25 @@ export default {
       this.scene = new THREE.Scene();
       this.group = new THREE.Group();
 
-      // Setup camera
-      this.camera = new THREE.PerspectiveCamera(
-        45,
-        window.innerWidth / window.innerHeight,
+      // Set up Orthographic Camera
+      const aspectRatio =
+        this.$refs.canvasContainer.clientWidth /
+        this.$refs.canvasContainer.clientHeight;
+      const frustumSize = 100;
+      this.camera = new THREE.OrthographicCamera(
+        (frustumSize * aspectRatio) / -2,
+        (frustumSize * aspectRatio) / 2,
+        frustumSize / 2,
+        frustumSize / -2,
         0.1,
         1000
       );
+
       this.camera.position.set(0, 0, 100);
       this.camera.lookAt(this.scene.position);
       this.scene.add(this.camera);
 
+      // Set up  renderer
       this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
 
       const width = this.$refs.canvasContainer.clientWidth;
@@ -46,8 +54,16 @@ export default {
       this.renderer.setPixelRatio(window.devicePixelRatio);
       this.$refs.canvasContainer.appendChild(this.renderer.domElement);
 
-      // Create character halo
-      const planeGeometry = new THREE.RingGeometry(9.5, 11, 1000);
+      const light = new THREE.AmbientLight(0xffffff, 1);
+
+      this.scene.add(light);
+
+      window.addEventListener("resize", this.onWindowResize);
+    },
+
+    // Create character halo
+    createHalo() {
+      const planeGeometry = new THREE.RingGeometry(10, 12, 1000);
       const planeMaterial = new THREE.MeshBasicMaterial({
         color: 0x3de5ff,
         side: THREE.DoubleSide,
@@ -60,18 +76,12 @@ export default {
       this.group.add(this.plane);
 
       this.scene.add(this.group);
-
-      const light = new THREE.AmbientLight(0xffffff, 1);
-
-      this.scene.add(light);
-
-      window.addEventListener("resize", this.onWindowResize);
     },
 
     // Generate audio bars
     createBars(bufferLength) {
       const barWidth = 2;
-      const barSpacing = 0.75;
+      const barSpacing = 0.3;
       const startX = -((bufferLength * (barWidth + barSpacing)) / 2);
       const barMaterial = new THREE.MeshBasicMaterial({
         color: 0xffffff,
@@ -80,7 +90,7 @@ export default {
       });
 
       const canvasContainerHeight = this.$refs.canvasContainer.offsetHeight;
-      const bottomOffset = canvasContainerHeight * 0.5 - 42;
+      const bottomOffset = canvasContainerHeight * 0.5 - 50;
 
       for (let i = 0; i < bufferLength; i++) {
         const geometry = new THREE.BoxGeometry(barWidth, 1, 1);
@@ -112,6 +122,7 @@ export default {
       this.dataArray = new Uint8Array(bufferLength);
 
       this.initThreeJS();
+      this.createHalo();
       this.createBars(bufferLength);
 
       this.animate();
@@ -149,7 +160,7 @@ export default {
       }
       average = average / this.dataArray.length;
 
-      const bounceHeight = (average / 256) * 5 + 2;
+      const bounceHeight = (average / 256) * 5 + 4.7;
       this.plane.position.y = bounceHeight;
 
       // Halo color change
@@ -168,7 +179,13 @@ export default {
       const width = this.$refs.canvasContainer.clientWidth;
       const height = this.$refs.canvasContainer.clientHeight;
 
-      this.camera.aspect = width / height;
+      const aspectRatio = width / height;
+      const frustumSize = 100;
+
+      this.camera.left = (frustumSize * aspectRatio) / -2;
+      this.camera.right = (frustumSize * aspectRatio) / 2;
+      this.camera.top = frustumSize / 2;
+      this.camera.bottom = frustumSize / -2;
       this.camera.updateProjectionMatrix();
 
       this.renderer.setSize(width, height);
