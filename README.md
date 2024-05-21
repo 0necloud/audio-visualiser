@@ -8,6 +8,7 @@ Click on the star ★ button on the bottom right to open up the audio controls a
 ## Controls Implemented
 - Uploading of audio files
 - Audio looping
+- Audio streaming from tabs / system (For desktops only, see [Supported Browsers](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia#browser_compatibility))
 
 ## Features:
 - Bouncing & Colour-Changing Halo
