@@ -14,10 +14,18 @@ export default {
   },
   props: {
     audioProp: Object,
+    audioStream: Object,
   },
   watch: {
-    audioProp() {
-      this.play();
+    audioProp(val) {
+      if (val) {
+        this.play(0);
+      }
+    },
+    audioStream(val) {
+      if (val) {
+        this.play(1);
+      }
     },
   },
   methods: {
@@ -105,16 +113,31 @@ export default {
     },
 
     // Audio starts playing
-    play() {
+    play(flag) {
       this.context.resume();
 
-      // ERROR: Failed to execute 'createMediaElementSource' on 'AudioContext': HTMLMediaElement already connected previously to a different MediaElementSourceNode.
-      // But it still works :D
-      this.src = this.context.createMediaElementSource(this.audioProp);
+      switch (flag) {
+        case 0:
+          this.elemSrc = this.context.createMediaElementSource(this.audioProp);
 
-      this.src.connect(this.analyser);
+          this.elemSrc.connect(this.analyser);
 
-      this.analyser.connect(this.context.destination);
+          this.analyser.connect(this.context.destination);
+
+          break;
+
+        case 1:
+          this.streamSrc = this.context.createMediaStreamSource(
+            this.audioStream
+          );
+
+          this.streamSrc.connect(this.analyser);
+
+          break;
+
+        default:
+          break;
+      }
 
       this.analyser.fftSize = 512;
 
@@ -136,20 +159,15 @@ export default {
 
       // Scale audio bars
       const barCount = this.bars.length;
-      const bandSize = Math.floor(this.dataArray.length / barCount);
-      const threshold = 0.1; // Smoothing threshold factor
+      const threshold = 0.5; 
+      const smoothingFactor = 0.1;
 
       for (let i = 0; i < barCount; i++) {
-        let sum = 0;
-        for (let j = 0; j < bandSize; j++) {
-          sum += this.dataArray[i * bandSize + j];
-        }
-        const averageValue = sum / bandSize;
-        const targetScale = (averageValue / 256) * 150;
+        const targetScale = (this.dataArray[i] / 256) * 150;
 
         // Apply threshold smoothing
         if (Math.abs(targetScale - this.bars[i].scale.y) > threshold) {
-          this.bars[i].scale.y += (targetScale - this.bars[i].scale.y) * 0.1;
+          this.bars[i].scale.y += (targetScale - this.bars[i].scale.y) * smoothingFactor;
         }
       }
 
